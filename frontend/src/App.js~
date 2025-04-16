@@ -1,0 +1,64 @@
+import React, {useEffect} from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useKeycloak } from '@react-keycloak/web';
+import Login from './components/Login';
+import Register from './components/Register';
+import ChatLayout from './components/ChatLayout';
+import ApiDocumentation from './components/ApiDocumentation';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+const theme = createTheme({
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#1976d2',
+        },
+        secondary: {
+            main: '#f50057',
+        },
+    },
+});
+
+function App() {
+    const { keycloak } = useKeycloak();
+    useEffect(() => {
+        const messageHandler = (event) => {
+            console.log("👀 Message received from iframe:", event.data);
+        };
+
+        window.addEventListener("message", messageHandler);
+
+        return () => {
+            window.removeEventListener("message", messageHandler);
+        };
+    }, []);
+    return (
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <Router>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/api-docs" element={<ApiDocumentation />} />
+                    <Route
+                        path="/chats"
+                        element={
+                            <ProtectedRoute>
+                                <ChatLayout />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route path="/" element={<Navigate to="/chats" replace />} />
+                </Routes>
+            </Router>
+        </ThemeProvider>
+    );
+}
+
+function ProtectedRoute({ children }) {
+    const { keycloak } = useKeycloak();
+    return keycloak.authenticated ? children : <Navigate to="/login" replace />;
+}
+
+export default App;

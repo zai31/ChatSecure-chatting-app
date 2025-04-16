@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ChatSecure WebSocket Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        #messages { list-style-type: none; margin: 0; padding: 0; }
+        #messages > li { padding: 0.5rem 1rem; }
+        #messages > li:nth-child(odd) { background: #efefef; }
+        #form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }
+        #input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
+        #input:focus { outline: none; }
+        #form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
+        #status { position: fixed; top: 0; left: 0; right: 0; background: #333; color: white; padding: 0.5rem 1rem; }
+    </style>
+</head>
+<body>
+    <div id="status">Disconnected</div>
+    <ul id="messages"></ul>
+    <form id="form">
+        <input id="input" type="text" placeholder="Type a message..." autocomplete="off" disabled />
+        <button type="submit" disabled>Send</button>
+    </form>
+
+    <script>
+        const messages = document.querySelector('#messages');
+        const form = document.querySelector('#form');
+        const input = document.querySelector('#input');
+        const statusDiv = document.querySelector('#status');
+        const button = form.querySelector('button');
+        let stompClient = null;
+
+        // Connect to WebSocket
+        function connect() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            
+            stompClient.connect({}, function(frame) {
+                statusDiv.textContent = 'Connected!';
+                statusDiv.style.backgroundColor = '#4CAF50';
+                input.disabled = false;
+                button.disabled = false;
+
+                // Subscribe to the public topic
+                stompClient.subscribe('/topic/messages', function(message) {
+                    const messageData = JSON.parse(message.body);
+                    const item = document.createElement('li');
+                    item.textContent = `${messageData.senderId}: ${messageData.textContent}`;
+                    messages.appendChild(item);
+                    window.scrollTo(0, document.body.scrollHeight);
+                });
+            }, function(error) {
+                statusDiv.textContent = 'Error connecting: ' + error;
+                statusDiv.style.backgroundColor = '#f44336';
+            });
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (input.value && stompClient) {
+                const messageContent = input.value;
+                const message = {
+                    senderId: 'TestUser-' + Math.floor(Math.random() * 1000),
+                    chatId: '123e4567-e89b-12d3-a456-426614174000',
+                    textContent: messageContent
+                };
+
+                stompClient.send("/app/chat", {}, JSON.stringify(message));
+                input.value = '';
+            }
+        });
+
+        // Connect when page loads
+        connect();
+    </script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/whatsapp_clone
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    flyway:
+      enabled: false
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9090/realms/whatsapp-clone
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  application:
+    file:
+      uploads:
+        media-output.path: ./uploads
+
+  reactor:
+    debug-agent:
+      enabled: on
+
+  liquibase:
+    enabled: false
+
+aws:
+  s3:
+    bucket-name: chatappuploads
+    access-key-id: AKIAS66UC2PKWY443T4D
+    secret-key: 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
+    region: us-east-1
+
+logging:
+  level:
+    software.amazon.awssdk: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

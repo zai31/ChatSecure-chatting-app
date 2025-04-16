@@ -1,0 +1,119 @@
+package whatsApp.zainab.whats_clone_backEnd.User;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import whatsApp.zainab.whats_clone_backEnd.chats.Chats;
+import whatsApp.zainab.whats_clone_backEnd.shared.Auditing;
+
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Entity
+@Table(name = "Users")
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@NamedQuery(name = UserConstants.FIND_USER_BY_EMAIL,
+        query = "SELECT u FROM Users u WHERE u.email = :email")
+@NamedQuery(name = UserConstants.FIND_ALL_USERS_EXCEPT_SELF,
+        query = "SELECT u FROM Users u " +
+                "JOIN u.Contacts c " +
+                "WHERE c.id = :publicId")
+@NamedQuery(name = UserConstants.FIND_USER_BY_PUBLIC_ID,
+        query = "SELECT u FROM Users u WHERE u.id = :publicId")
+
+public class Users extends Auditing {
+    private static final int LAST_ACTIVATE_INTERVAL = 5;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(unique = true, nullable = false)
+    private UUID id;
+    private String username;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String phone;
+    private LocalDateTime lastSeen;
+    private String status;
+
+    private String profilePic;
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_contacts",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "contact_id")
+    )
+    private List<Users> Contacts;
+    @ManyToMany
+    @JoinTable(
+            name = "blocked_users",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "blocked_id")
+    )
+    private List<Users> blockedUsers = new ArrayList<>();
+    @ManyToMany(mappedBy = "members")
+    private Set<Chats> chats = new HashSet<>();
+
+    @Transient
+    public boolean isUserOnline() {
+        return lastSeen != null && lastSeen.isAfter(LocalDateTime.now().minusMinutes(LAST_ACTIVATE_INTERVAL));//within last 5 minutes
+    }
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
+
+    // Existing fields...
+
+    // Constructors
+    public Users() {
+        this.version = 0L;
+    }
+
+    public Users(UUID id) {
+        this.id = id;
+        this.version = 0L;
+    }
+
+    // Getter and setter for version
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version != null ? version : 0L;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.version == null) {
+            this.version = 0L;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        if (this.version == null) {
+            this.version = 0L;
+        }
+    }
+
+   /* @PrePersist
+    protected void onCreate() {
+        this.version = 0L;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        if (this.version == null) {
+            this.version = 0L;
+        }
+    }
+*/
+}
+

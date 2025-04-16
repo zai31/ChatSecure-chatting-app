@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Keycloak Silent Check SSO</title>
+</head>
+<body>
+
+    <script>
+        // This page is used in the silent authentication process
+        parent.postMessage(location.href, location.origin);
+    </script>
+</body>
+</html>
