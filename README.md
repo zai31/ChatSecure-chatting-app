@@ -17,5 +17,6 @@ Coming soon:
 - File sharing (AWS S3 integration)
 - Chat search and group leave
 - UI polish and mobile support
+- deployment
 
 🎯 Goal: A complete secure messaging app with file sharing and SSO.
